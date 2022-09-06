@@ -2,72 +2,91 @@ import time
 
 class timer:
     def __init__(self):
-        self.strt = None
-        self.end = None
-        self.pauseStart = 0
-        self.pauseEnd = 0
-        self.totalPause = 0
-        self.mark = 0
-        self.running = False
-        self.paused = False
+        self.__strt = None
+        self.__psd = None
+        self.__mark = 0
+        self.__running = False
+        self.__paused = False
+
+    def __toggleRun(self):
+        self.__running = False if self.__running else True
+    def __togglePause(self):
+        self.__paused = False if self.__paused else True
+        self.__toggleRun()
+    def __reset(self):
+        self.__paused = False
+        self.__running = False
+        self.__strt = 0
+
+    def statusAndTime(self):
+        if self.__strt == None:
+            print(f"TimeMyScript2 (SHOW): Timer never started")
+            return
+        elif self.__paused:
+            string = "paused"
+        elif self.__running:
+            string = "running"
+        else:
+            string = "STOPPED"
+        print(f"TimeMyScript2 (SHOW): {self.retrieveCurrent()} s and {string}")
+
+    def retrieveCurrent(self):
+        if self.__paused:
+            return self.__psd - self.__strt
+        elif self.__running:
+            return time.time() - self.__strt
 
     def start(self):
-        if not self.running:
-            self.strt = time.time()
-            self.mark = self.strt
-            self.running = True
-            print(f"TimeMyScript2 (START): Started")
+        """
+        Start a time or resume it from a pause
+        """
+        if not self.__running:
+            if self.__paused:
+                self.__strt += time.time() - self.__psd
+                self.__mark = self.__strt
+                self.__togglePause()
+                print(f"TimeMyScript2 (RESUME): Resumed at {str(time.time() - self.__strt)[:5]} s")
+            else:
+                self.__strt = time.time()
+                self.__mark = self.__strt
+                print(f"TimeMyScript2 (START): Started")
+                self.__toggleRun()
         else:
             print(f"TimeMyScript2 (START): Already running")
 
-
-    def stop(self):
-        if  self.running:
-            self.end = time.time()
-            self.running = False
-            self.resetPause()
-            print(f"TimeMyScript2 (STOPPED): {self.end - self.strt - self.pauseDiff()} s")
-        else:
-            print(f"TimeMyScript2 (START): Already stopped")
-
     def pause(self):
-        if not self.paused and self.running:
-            self.pauseStart = time.time()
-            self.paused = True
-            print(f"TimeMyScript2 (PAUSE): Paused at {str(time.time()-self.strt)[:5]} s")
-        elif not self.running:
+        if not self.__paused:
+            self.__psd = time.time() # CHANGE
+            self.__togglePause()
+
+            print(f"TimeMyScript2 (PAUSE): paused at {str(self.__psd - self.__strt)[:5]} s")
+
+        elif not self.__running:
             print(f"TimeMyScript2 (PAUSE): Can't pause not running timer")
-        elif self.paused:
+
+        elif self.__paused:
             print(f"TimeMyScript2 (PAUSE): Already paused")
+        
 
-    def resume(self):
-        if self.paused:
-            a = time.time()
-            self.totalPause += a - self.pauseStart
-            self.pauseEnd = a
-            print(f"TimeMyScript2 (RESUME): Resumed at {str(time.time()-self.strt - self.pauseDiff())[:5]} s")
-            self.resetPause()
-        elif not self.paused and self.running:
-            print(f"TimeMyScript2 (RESUME): Already running")
-        else:
-            print(f"TimeMyScript2 (RESUME): Can't resume stopped timer")
-
-    def pauseDiff(self):
-        if not self.pauseEnd:
-            self.pauseEnd = time.time()
-        return self.pauseEnd - self.pauseStart
 
     def lap(self):
-        if not self.running or self.paused:
-            if not self.running : add = "not running" 
-            if self.paused : add = "paused" 
+        if not self.__running or self.__paused:
+            if not self.__running : add = "not running" 
+            if self.__paused : add = "paused" 
             print("TimeMyScript2 (LAP): Can't lap while " + add)
         else:
-            print(f"TimeMyScript2 (LAP):  [LAP - {str(time.time() - self.mark )[:5]}s] | [TOTAL - {str(time.time()-self.strt - self.pauseDiff())[:5]} s]")
-            self.mark = time.time()
+            print(f"TimeMyScript2 (LAP):  [LAP - {str(time.time() - self.__mark)[:5]}s] | [TOTAL - {str(time.time() - self.__strt)[:5]} s]")
+            self.__mark = time.time()
 
-    def resetPause(self):
-        self.pauseEnd = 0
-        self.pauseStart = 0
-        self.paused = False
+    
+    def stop(self):
+        if self.__running:
+            print(f"TimeMyScript2 (STOPPED): {time.time() - self.__strt} s")
+            self.__reset()
+        elif self.__paused:
+            print(f"TimeMyScript2 (STOPPED): {self.__psd - self.__strt} s")
+            self.__reset()
+        else:
+            print(f"TimeMyScript2 (START): Already stopped")
+ 
 t = timer()
